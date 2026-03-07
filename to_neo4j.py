@@ -13,12 +13,12 @@ engine = create_engine('postgresql://postgres:postgres@localhost:5432/criminalit
 
 # Connexion à Neo4j (Cible)
 URI = "bolt://localhost:7687"
-AUTH = ("neo4j", "01234567") # À remplacer par votre mot de passe
+AUTH = ("neo4j", "01234567") 
 driver = GraphDatabase.driver(URI, auth=AUTH)
 
-# ==========================================
-# 2. EXTRACTION DEPUIS SQL (SELECT)
-# ==========================================
+# =========================
+# 2. EXTRACTION DEPUIS SQL 
+# =========================
 print("📥 Extraction des données depuis PostgreSQL...")
 
 # Extraction des futurs Noeuds
@@ -99,7 +99,7 @@ with driver.session(database="crimes") as session:
     """, parametres=dict_rel_communes_voisines)
     
 
-    # --- Insertion des Faits (A_CONSTATE) en lots (batches) ---
+    # --- Insertion des Faits (A_CONSTATE) en lots ---
     batch_size = 30000
     for idx in tqdm(range(0, len(dict_faits), batch_size), desc="A_CONSTATE"):
         session.run("""
@@ -110,4 +110,5 @@ with driver.session(database="crimes") as session:
             SET r.nombre = toInteger(row.nombre)
         """, parametres=dict_faits[idx : idx + batch_size])
 
-print("\n🎉 Migration SQL -> Neo4j terminée avec succès !")
+
+print("\n ✅ Migration SQL -> Neo4j terminée avec succès !")
