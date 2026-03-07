@@ -32,7 +32,7 @@ def clean_nom_commune(in_nom):
     # Supprimer les accents (Normalisation NFD)
     name = unicodedata.normalize('NFD', name).encode('ascii', 'ignore').decode('utf-8')
     
-    # Remplacer TOUTE la ponctuation (tirets, apostrophes, etc.) par un espace
+    # Remplacer toute la ponctuation (tirets, apostrophes, etc.) par un espace
     name = re.sub(r'[^A-Z0-9\s]', ' ', name)
     
     # Remplacer les espaces multiples par un seul espace
@@ -43,10 +43,10 @@ def clean_nom_commune(in_nom):
 def extraire_commune(poste):
     name = str(poste).strip().upper()
     
-    # 1. Enlever les numéros de département à la fin (2 ou 3 chiffres)
+    # 1. Enlever les numéros de département
     name = re.sub(r'\s+\d{2,3}$', '', name)
     
-    # 2. Liste des préfixes (Corrigée et générique)
+    # 2. Liste des préfixes 
     prefixes = [
         r"^CIAT\s+(CENTRAL|SUB)?\s*(DU|DES|DE\s+|D')?\s*",
         r"^CIAT\s*",
@@ -123,9 +123,6 @@ def process_GN(in_excel_file, in_sheet_name):
     # Nettoyage des données
     df_melted = df_melted.dropna(subset=['nombre'])
     df_melted['nombre'] = pd.to_numeric(df_melted['nombre'], errors='coerce').fillna(0).astype(int)
-    
-    # --- AJOUT CRUCIAL : Ne garder que les crimes ayant vraiment eu lieu ---
-    df_melted = df_melted[df_melted['nombre'] > 0]
     
     # On supprime la colonne technique
     df_melted.drop(columns=['col_index'], inplace=True)
@@ -210,7 +207,6 @@ def get_max_id(engine, table_name, id_column):
             max_id = result.scalar()
             return max_id if max_id is not None else 0
     except Exception:
-        # La table n'existe probablement pas encore
         return 0
 
 
@@ -305,7 +301,6 @@ def run_migration():
     tbl_postes = sync_dimension(engine, 'tbl_postes', df_postes_prep, ['poste', 'type_poste', 'id_commune', 'id_perimetre'], 'id_poste')
 
     # 3. Table de liaison (Communes Voisines)
-    # On utilise directement df_communes_voisines au lieu de df_master 
     df_cv_prep = (
         df_communes_voisines[['commune','commune_voisine']].dropna().drop_duplicates()
         .merge(tbl_communes[['commune', 'id_commune']], on='commune')
@@ -369,4 +364,5 @@ def run_migration():
 
 if __name__ == "__main__":
     create_sql_database() # Crée la base si elle n'existe pas
+
     run_migration()       # Lance la synchronisation Pandas -> SQL
